@@ -258,7 +258,7 @@ z = vertcat(z, z_5);
 zReal = paraboloid(x, y);
 res = norm(zReal - z);
 
-save pos.mat x y z l1 l2
+save data/pos.mat x y z l1 l2
 
 %%
 %-----------------------------------------------------------%
