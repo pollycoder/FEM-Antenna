@@ -1,5 +1,7 @@
 function [c, ceq] = nonlcon(X)
-l1 = 0.4; l2 = X;
+l1 = 0.4; l2 = X(1); l3 = X(2); l4 = X(3);
+scale = 2;
+tol1 = 0.01; tol2 = -scale*tol1;
 
 %-------------- 1st layer: Hexagon (fixed) - 6 -------------%
 theta_1 = linspace(0, 5/3*pi, 6)';
@@ -17,8 +19,8 @@ y_2 = zeros(12, 1);
 z_2 = zeros(12, 1);
 
 % 1, 3, 5, 7, 9, 11 - On the paraboloid
-Z_1 = parabola(R_1);
-f = @(phi)(Z_1 + l2*sin(phi) - parabola(R_1+l2*cos(phi)));
+Z_1 = parabola(R_1)-tol1;
+f = @(phi)(Z_1 + l2*sin(phi) - parabola(R_1+l2*cos(phi))-tol2);
 options = optimoptions('fsolve', 'Display', 'off');
 phi = fsolve(f, pi/3, options);
 R_2 = R_1 + l2*cos(phi);
@@ -49,6 +51,7 @@ for i=index
 end
 
 %---------- 3rd layer: Icositetragon (fixed) - 24 ----------%
+l2 = l3;
 x_3 = zeros(24, 1);
 y_3 = zeros(24, 1);
 z_3 = zeros(24, 1);
@@ -58,8 +61,8 @@ index3 = 1:2:24;
 for i=1:12
     theta = theta_2(i);
     R = r_2(i);
-    Z = z_2(i);
-    f = @(phi)(z + l2*sin(phi) - parabola(R+l2*cos(phi)));
+    Z = z_2(i)-tol1;
+    f = @(phi)(Z + l2*sin(phi) - parabola(R+l2*cos(phi))-tol2);
     options = optimoptions('fsolve', 'Display', 'off', 'Algorithm', 'levenberg-marquardt');
     phi = fsolve(f, pi/3, options);
     R_3 = R + l2*cos(phi);
@@ -98,8 +101,73 @@ z = vertcat(z, z_3);
 
 r_3 = sqrt(x_3.^2 + y_3.^2 + z_3.^2);
 
+%------------------- 4th layer:  - 36 -----------------%
+l2 = l4;
+x_4 = zeros(36, 1);
+y_4 = zeros(36, 1);
+z_4 = zeros(36, 1);
 
-c = [R_2 .* ones(size(r_2)) - r_2; R_3 .* 0.9 .* ones(size(r_3)) - r_3];
+% 1, 4, 7, ....34
+index4 = 1:3:36;
+index3 = 1:2:24;
+[theta_3, r_3, z_3] = cart2pol(x_3, y_3, z_3);
+for i=1:12
+    theta = theta_3(index3(i));
+    R = r_3(index3(i));
+    Z = z_3(index3(i))-tol1;
+    f = @(phi)(Z + l2*sin(phi) - parabola(R+l2*cos(phi))-tol2);
+    options = optimoptions('fsolve', 'Display', 'off', ...
+                           'Algorithm', 'levenberg-marquardt');
+    phi = fsolve(f, pi/3, options);
+    R_4 = R + l2*cos(phi);
+    Z_4 = Z + l2*sin(phi);
+
+    z_4(index4(i)) = Z_4;
+    x_4(index4(i)) = R_4 .* cos(theta);
+    y_4(index4(i)) = R_4 .* sin(theta);
+end
+
+% Rest
+IEN = zeros(12, 4);
+for i=1:size(IEN, 1)
+    IEN(i, :) = [2*i-1, 2*i, 2*i, mod(2*i+1, 24)];
+    np1 = [x_3(IEN(i, 1)); y_3(IEN(i, 1)); z_3(IEN(i, 1))];
+    np2 = [x_3(IEN(i, 2)); y_3(IEN(i, 2)); z_3(IEN(i, 2))];
+    np3 = [x_3(IEN(i, 3)); y_3(IEN(i, 3)); z_3(IEN(i, 3))];
+    np4 = [x_3(IEN(i, 4)); y_3(IEN(i, 4)); z_3(IEN(i, 4))];
+    np5 = [x_4(3*i-2); y_4(3*i-2); z_4(3*i-2)];
+    np6 = [x_4(mod(3*i+1,36)); y_4(mod(3*i+1,36)); z_4(mod(3*i+1,36))];
+    
+    f = @(X)[norm(X(1:3)-np1) - l2;
+             norm(X(1:3)-np2) - l2;
+             norm(X(4:6)-np3) - l2;
+             norm(X(4:6)-np4) - l2;
+             norm(X(1:3)-np5) - l1;
+             norm(X(1:3)-X(4:6)) - l1;
+             norm(X(4:6)-np6) - l1];
+    X0 = ones(6, 1);
+    options = optimoptions('fsolve', 'Display', 'off', ...
+                           'Algorithm', 'levenberg-marquardt');
+    X = fsolve(f, X0, options);
+
+    x_4(3*i-1) = X(1);
+    y_4(3*i-1) = X(2);
+    z_4(3*i-1) = X(3);
+    x_4(3*i) = X(4);
+    y_4(3*i) = X(5);
+    z_4(3*i) = X(6);    
+end
+
+
+x = vertcat(x, x_4);
+y = vertcat(y, y_4);
+z = vertcat(z, z_4);
+
+r = sqrt(x.^2 + y.^2 + z.^2);
+rMax = max(r);
+
+
+c = [R_2 .* ones(size(r_2)) - r_2; R_3 .* ones(size(r_3)) - r_3];
 ceq = [];
 
 end
