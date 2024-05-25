@@ -7,24 +7,28 @@ clc;clear, close all
 X_0 = [0.9    0.9    0.9   0.9 0 0 0 0 0 0 0.9 0.9 0.9 0.9];
 %X_0= [0.5798    0.8503    0.7184    0.8082    0.3294    0.0758    0.6214 0.0810    0.2917    0.0652 ];
 A = [-eye(4),zeros(4,6), zeros(4);
-    eye(4),zeros(4,6);
-    zeros(6,4), -eye(6);
-    zeros(6,4), eye(6);];
+    eye(4),zeros(4,6), zeros(4);
+    zeros(6,4), -eye(6), zeros(6, 4);
+    zeros(6,4), eye(6), zeros(6, 4);
+    zeros(4),zeros(4,6), -eye(4);
+    zeros(4),zeros(4,6), eye(4)];
 b = [-0.5 .* ones(4, 1);
     1.2 .* ones(4, 1);
     1.*ones(6,1);
-    2.*ones(6,1);];
+    2.*ones(6,1);
+    -0.4 .* ones(4, 1);
+    0.6 .* ones(4, 1)];
 
 options = optimoptions('ga', ...
     'UseParallel', true, ...
     'MaxGenerations', 1000, ...
-    'PopulationSize', 300, ...
+    'PopulationSize', 3000, ...
     'FunctionTolerance', 1e-5, ...
     'ConstraintTolerance', 1e-5, ...
     'Display', 'iter');
 
-lb = -10 .* ones(1, 10);
-ub = -lb;
+lb = [0.4.*ones(1, 4), -3 .*ones(1, 6), 0.4 .*ones(1, 4)];
+ub = [2 .*ones(1, 4), 3 .*ones(1, 6), 0.6 .*ones(1, 4)];
 
 %调用 ga 函数进行优化
 [X, result] = ga(@obj_antenna, numel(X_0), A, b, [], [], lb, ub, [], options);
