@@ -4,24 +4,20 @@
 %-----------------------------------------------------------%
 clc;clear, close all
 
-X_0 = [0.9    0.9    0.9   0.9 0 0 0 0 0 0 0.9 0.9 0.9 0.9 0.9];
-%X_0= [0.5798    0.8503    0.7184    0.8082    0.3294    0.0758    0.6214 0.0810    0.2917    0.0652 ];
-A = [-eye(4),zeros(4,6), zeros(4,5);
-    eye(4),zeros(4,6), zeros(4,5);
-    zeros(6,4), -eye(6), zeros(6, 5);
-    zeros(6,4), eye(6), zeros(6, 5);
-    zeros(4),zeros(4,6), -eye(4), zeros(4, 1);
-    zeros(4),zeros(4,6), eye(4), zeros(4, 1);
-    zeros(1, 14), -1;
-    zeros(1, 14), 1];
+X_0 = [0.9    0.9    0.9   0.9 0 0 0 0 0 0 0.9 0.9 0.9 0.9];
+
+A = [-eye(4),zeros(4,6), zeros(4);
+    eye(4),zeros(4,6), zeros(4);
+    zeros(6,4), -eye(6), zeros(6, 4);
+    zeros(6,4), eye(6), zeros(6, 4);
+    zeros(4),zeros(4,6), -eye(4);
+    zeros(4),zeros(4,6), eye(4)];
 b = [-0.5 .* ones(4, 1);
     1.2 .* ones(4, 1);
     1.*ones(6,1);
     2.*ones(6,1);
     -0.4 .* ones(4, 1);
-    0.6 .* ones(4, 1);
-    -0.4;
-    2];
+    0.6 .* ones(4, 1)];
 
 options = optimoptions('ga', ...
     'UseParallel', true, ...
@@ -31,8 +27,8 @@ options = optimoptions('ga', ...
     'ConstraintTolerance', 1e-5, ...
     'Display', 'iter');
 
-lb = [0.4.*ones(1, 4), -3 .*ones(1, 6), 0.4 .*ones(1, 5)];
-ub = [1 .*ones(1, 4), 3 .*ones(1, 6), 0.5 .*ones(1, 4), 1];
+lb = [0.4.*ones(1, 4), 0 .*ones(1, 6), 0.4 .*ones(1, 4)];
+ub = [0.9 .*ones(1, 4), 2 .*ones(1, 6), 0.45 .*ones(1, 4)];
 
 %调用 ga 函数进行优化
 [X_0, result] = ga(@obj_antenna, numel(X_0), A, b,[],[],lb,ub,[],options);
@@ -45,8 +41,8 @@ ub = [1 .*ones(1, 4), 3 .*ones(1, 6), 0.5 .*ones(1, 4), 1];
 %result
 
 %%
-l2 = X_0(1); l3 = X_0(2); l4 = X_0(3);
-l11 = X_0(11); l12 = X_0(12); l13 = X_0(13); l14 = X_0(14);l25 = X_0(15);
+l2 = X_0(1); l3 = X_0(2); l4 = X_0(3); l25 = X_0(4);
+l11 = X_0(11); l12 = X_0(12); l13 = X_0(13); l14 = X_0(14);
 tol1_12 = 0.01+0.1*X_0(5);
 tol2_12 = -0.02+0.1*X_0(6);
 tol1_23 = 0.01+0.1*X_0(7);
@@ -72,8 +68,8 @@ y_2 = zeros(12, 1);
 z_2 = zeros(12, 1);
 
 % 1, 3, 5, 7, 9, 11 - On the paraboloid
-Z_1 = parabola(R_1) - tol1_12;
-f = @(phi)(Z_1 + l2*sin(phi) - parabola(R_1+l2*cos(phi))+tol2_12);
+Z_1 = parabola(R_1)-tol1_12;
+f = @(phi)(Z_1 + l2*sin(phi) - parabola(R_1+l2*cos(phi))-tol2_12);
 options = optimoptions('fsolve', 'Display', 'off');
 phi = fsolve(f, pi/3, options);
 R_2 = R_1 + l2*cos(phi);
@@ -120,8 +116,9 @@ for i=1:12
     theta = theta_2(i);
     R = r_2(i);
     Z = z_2(i)-tol1_23;
-    f = @(phi)(Z + l2*sin(phi) - parabola(R+l2*cos(phi))+tol2_23);
-    options = optimoptions('fsolve', 'Display', 'off', 'Algorithm', 'levenberg-marquardt');
+    f = @(phi)(Z + l2*sin(phi) - parabola(R+l2*cos(phi))-tol2_23);
+    options = optimoptions('fsolve', 'Display', 'off', ...
+                           'Algorithm', 'levenberg-marquardt');
     phi = fsolve(f, pi/3, options);
     R_3 = R + l2*cos(phi);
     Z_3 = Z + l2*sin(phi);
@@ -156,6 +153,7 @@ end
 x = vertcat(x, x_3);
 y = vertcat(y, y_3);
 z = vertcat(z, z_3);
+
 
 %------------------- 4th layer:  - 36 -----------------%
 l1 = l14;
@@ -265,7 +263,7 @@ res = zReal - z;
 norm(res)%/sqrt(size(z,1))
 f=figure;
 stem(1:length(z), res, 'LineWidth', 1.5);
-saveas(f, 'data/res', 'png');
+saveas(f, 'data/res', 'fig');
 
 save data/pos.mat x y z l1 l2 res
 
@@ -290,5 +288,5 @@ scatter3(x_4, y_4, z_4, 'LineWidth', 2, 'MarkerEdgeColor', 'm'); hold on
 scatter3(x_5, y_5, z_5, 'LineWidth', 2, 'MarkerEdgeColor', 'r'); hold on
 colorbar
 axis equal
-saveas(f, 'data/antenna', 'png')
+saveas(f, 'data/antenna', 'fig')
 
