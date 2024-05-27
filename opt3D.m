@@ -32,7 +32,7 @@ options = optimoptions('ga', ...
     'Display', 'iter');
 
 lb = [0.4.*ones(1, 4), -3 .*ones(1, 6), 0.4 .*ones(1, 5)];
-ub = [1 .*ones(1, 4), 3 .*ones(1, 6), 0.6 .*ones(1, 4), 1];
+ub = [1 .*ones(1, 4), 3 .*ones(1, 6), 0.5 .*ones(1, 4), 1];
 
 %调用 ga 函数进行优化
 [X_0, result] = ga(@obj_antenna, numel(X_0), A, b,[],[],lb,ub,[],options);
