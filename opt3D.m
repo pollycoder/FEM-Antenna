@@ -4,34 +4,38 @@
 %-----------------------------------------------------------%
 clc;clear, close all
 
-X_0 = [0.9    0.9    0.9   0.9 0 0 0 0 0 0 0.9 0.9 0.9 0.9];
+X_0 = [0.9    0.9    0.9   0.9 0 0 0 0 0 0 0.9 0.9 0.9 0.9 0.9];
 %X_0= [0.5798    0.8503    0.7184    0.8082    0.3294    0.0758    0.6214 0.0810    0.2917    0.0652 ];
-A = [-eye(4),zeros(4,6), zeros(4);
-    eye(4),zeros(4,6), zeros(4);
-    zeros(6,4), -eye(6), zeros(6, 4);
-    zeros(6,4), eye(6), zeros(6, 4);
-    zeros(4),zeros(4,6), -eye(4);
-    zeros(4),zeros(4,6), eye(4)];
+A = [-eye(4),zeros(4,6), zeros(4,5);
+    eye(4),zeros(4,6), zeros(4,5);
+    zeros(6,4), -eye(6), zeros(6, 5);
+    zeros(6,4), eye(6), zeros(6, 5);
+    zeros(4),zeros(4,6), -eye(4), zeros(4, 1);
+    zeros(4),zeros(4,6), eye(4), zeros(4, 1);
+    zeros(1, 14), -1;
+    zeros(1, 14), 1];
 b = [-0.5 .* ones(4, 1);
     1.2 .* ones(4, 1);
     1.*ones(6,1);
     2.*ones(6,1);
     -0.4 .* ones(4, 1);
-    0.6 .* ones(4, 1)];
+    0.6 .* ones(4, 1);
+    -0.4;
+    2];
 
 options = optimoptions('ga', ...
     'UseParallel', true, ...
     'MaxGenerations', 1000, ...
-    'PopulationSize', 3000, ...
+    'PopulationSize', 300, ...
     'FunctionTolerance', 1e-5, ...
     'ConstraintTolerance', 1e-5, ...
     'Display', 'iter');
 
-lb = [0.4.*ones(1, 4), -3 .*ones(1, 6), 0.4 .*ones(1, 4)];
-ub = [2 .*ones(1, 4), 3 .*ones(1, 6), 0.6 .*ones(1, 4)];
+lb = [0.4.*ones(1, 4), -3 .*ones(1, 6), 0.4 .*ones(1, 5)];
+ub = [2 .*ones(1, 4), 3 .*ones(1, 6), 0.6 .*ones(1, 4), 2];
 
 %调用 ga 函数进行优化
-[X, result] = ga(@obj_antenna, numel(X_0), A, b, [], [], lb, ub, [], options);
+[X, result] = ga(@obj_antenna, numel(X_0), A, b,[],[],lb,ub,[],options);
 [c, ~] = nonlcon(X);
 X
 result
@@ -43,7 +47,7 @@ result
 
 %%
 l2 = X(1); l3 = X(2); l4 = X(3);
-l11 = X(11); l12 = X(12); l13 = X(13); l14 = X(14);
+l11 = X(11); l12 = X(12); l13 = X(13); l14 = X(14);l25 = X(15);
 tol1_12 = 0.01+0.1*X(5);
 tol2_12 = -0.02+0.1*X(6);
 tol1_23 = 0.01+0.1*X(7);
@@ -216,6 +220,43 @@ end
 x = vertcat(x, x_4);
 y = vertcat(y, y_4);
 z = vertcat(z, z_4);
+
+%------------------- 5th layer:  - 36 -----------------%
+l2 = l25;
+h = sqrt(l2^2-(l1/2)^2);
+l2 = h;
+x_5 = zeros(36, 1);
+y_5 = zeros(36, 1);
+z_5 = zeros(36, 1);
+
+IEN = zeros(36, 2);
+for i=1:36
+    IEN(i, :) = [i, mod(i, 36)+1];
+end
+
+for i=1:size(IEN, 1)
+    np1 = [x_4(IEN(i, 1)); y_4(IEN(i, 1)); z_4(IEN(i, 1))];
+    np2 = [x_4(IEN(i, 2)); y_4(IEN(i, 2)); z_4(IEN(i, 2))];
+    npm = 1/2.*(np1+np2);
+    [theta, R, Z] = cart2pol(npm(1), npm(2), npm(3));
+
+    f = @(phi)(Z + l2*sin(phi) - parabola(R+l2*cos(phi)));
+    options = optimoptions('fsolve', 'Display', 'off', ...
+                           'Algorithm', 'levenberg-marquardt');
+    phi = fsolve(f, pi/3, options);
+    R_5 = R + l2*cos(phi);
+    Z_5 = Z + l2*sin(phi);
+
+    z_5(i) = Z_5;
+    x_5(i) = R_5 .* cos(theta);
+    y_5(i) = R_5 .* sin(theta);
+
+end
+
+
+x = vertcat(x, x_5);
+y = vertcat(y, y_5);
+z = vertcat(z, z_5);
 r = sqrt(x.^2 + y.^2 + z.^2);
 Rm = max(r);
 
@@ -245,8 +286,9 @@ z0 = paraboloid(x0, y0);
 mesh(x0, y0, z0, 'LineWidth', 1.5);hold on
 scatter3(x_1, y_1, z_1, 'LineWidth', 2, 'MarkerEdgeColor', 'c'); hold on
 scatter3(x_2, y_2, z_2, 'LineWidth', 2, 'MarkerEdgeColor', 'b'); hold on
-scatter3(x_3, y_3, z_3, 'LineWidth', 2, 'MarkerEdgeColor', 'm'); hold on
-scatter3(x_4, y_4, z_4, 'LineWidth', 2, 'MarkerEdgeColor', 'r'); hold on
+scatter3(x_3, y_3, z_3, 'LineWidth', 2, 'MarkerEdgeColor', 'g'); hold on
+scatter3(x_4, y_4, z_4, 'LineWidth', 2, 'MarkerEdgeColor', 'm'); hold on
+scatter3(x_5, y_5, z_5, 'LineWidth', 2, 'MarkerEdgeColor', 'r'); hold on
 colorbar
 axis equal
 saveas(f, 'data/antenna', 'png')

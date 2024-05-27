@@ -4,7 +4,7 @@
 %-----------------------------------------------------------%
 function res = obj_antenna(X)
 l2 = X(1); l3 = X(2); l4 = X(3);
-l11 = X(11); l12 = X(12); l13 = X(13); l14 = X(14);
+l11 = X(11); l12 = X(12); l13 = X(13); l14 = X(14); l25 = X(15);
 tol1_12 = 0.01+0.1*X(5);
 tol2_12 = -0.02+0.1*X(6);
 tol1_23 = 0.01+0.1*X(7);
@@ -179,6 +179,43 @@ end
 x = vertcat(x, x_4);
 y = vertcat(y, y_4);
 z = vertcat(z, z_4);
+
+%------------------- 5th layer:  - 36 -----------------%
+l2 = l25;
+h = sqrt(l2^2-(l1/2)^2);
+l2 = h;
+x_5 = zeros(36, 1);
+y_5 = zeros(36, 1);
+z_5 = zeros(36, 1);
+
+IEN = zeros(36, 2);
+for i=1:36
+    IEN(i, :) = [i, mod(i, 36)+1];
+end
+
+for i=1:size(IEN, 1)
+    np1 = [x_4(IEN(i, 1)); y_4(IEN(i, 1)); z_4(IEN(i, 1))];
+    np2 = [x_4(IEN(i, 2)); y_4(IEN(i, 2)); z_4(IEN(i, 2))];
+    npm = 1/2.*(np1+np2);
+    [theta, R, Z] = cart2pol(npm(1), npm(2), npm(3));
+
+    f = @(phi)(Z + l2*sin(phi) - parabola(R+l2*cos(phi)));
+    options = optimoptions('fsolve', 'Display', 'off', ...
+                           'Algorithm', 'levenberg-marquardt');
+    phi = fsolve(f, pi/3, options);
+    R_5 = R + l2*cos(phi);
+    Z_5 = Z + l2*sin(phi);
+
+    z_5(i) = Z_5;
+    x_5(i) = R_5 .* cos(theta);
+    y_5(i) = R_5 .* sin(theta);
+
+end
+
+
+x = vertcat(x, x_5);
+y = vertcat(y, y_5);
+z = vertcat(z, z_5);
 
 
 zReal = paraboloid(x, y);
