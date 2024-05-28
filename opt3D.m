@@ -31,8 +31,10 @@ lb = [0.4.*ones(1, 4), 0 .*ones(1, 6), 0.4 .*ones(1, 4)];
 ub = [0.9 .*ones(1, 4), 2 .*ones(1, 6), 0.45 .*ones(1, 4)];
 
 %调用 ga 函数进行优化
-[X_0, result] = ga(@obj_antenna, numel(X_0), A, b,[],[],lb,ub,[],options);
-[c, ~] = nonlcon(X_0);
+[X_0, ~] = ga(@obj_antenna, numel(X_0), A, b,[],[],lb,ub,[],options);
+
+options = optimoptions("fmincon", 'UseParallel',true);
+[X_0, result] = fmincon(@obj_antenna, X_0, A, b, [],[],lb, ub, [], options);
 
 %X = X_0;
 %0.5798    0.8503    0.7184    0.8082    0.3294    0.0758    0.6214
@@ -247,6 +249,10 @@ for i=1:size(IEN, 1)
     z_5(i) = Z_5;
     x_5(i) = R_5 .* cos(theta);
     y_5(i) = R_5 .* sin(theta);
+    
+    np = [x_5(i); y_5(i); z_5(i)];
+    L1(i) = norm(np-np1);
+    L2(i) = norm(np-np2);
 
 end
 
