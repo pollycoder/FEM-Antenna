@@ -227,6 +227,6 @@ num = (1:1:(size(pos,1)))'; %符号记载
 points = [6, 12, 24, 36, 36];
 IEN = IEN_all(num, points); %可以在迭代开始的时候只生成一次，循环使用
 precious_z = @(pos_xy) (pos_xy(:,1).^2+pos_xy(:,2).^2)./(4*2.17); %计算准确的抛物面句柄
-rms = loss_cal(IEN, pos, precious_z);
+rms = 100*loss_cal(IEN, pos, precious_z);
 
 end
