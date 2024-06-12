@@ -2,7 +2,7 @@
 % FEM Big Project - Antenna Structure Optimization          %  
 % 7 Layers                                                  %
 %-----------------------------------------------------------%
-function res = obj_antenna(X)
+function rms = obj_antenna(X)
 l2 = X(1); l3 = X(2); l4 = X(3); l25 = X(4);
 l11 = X(11); l12 = X(12); l13 = X(13); l14 = X(14);
 tol1_12 = 0.01+0.1*X(5);
@@ -220,5 +220,13 @@ z = vertcat(z, z_5);
 
 zReal = paraboloid(x, y);
 res = norm(zReal - z);
+
+pos = [x,y,z];
+pos = [pos;[0 0 0]]; % 单位：m
+num = (1:1:(size(pos,1)))'; %符号记载
+points = [6, 12, 24, 36, 36];
+IEN = IEN_all(num, points); %可以在迭代开始的时候只生成一次，循环使用
+precious_z = @(pos_xy) (pos_xy(:,1).^2+pos_xy(:,2).^2)./(4*2.17); %计算准确的抛物面句柄
+rms = loss_cal(IEN, pos, precious_z);
 
 end

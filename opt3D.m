@@ -27,14 +27,14 @@ options = optimoptions('ga', ...
     'ConstraintTolerance', 1e-5, ...
     'Display', 'iter');
 
-lb = [0.4.*ones(1, 4), 0 .*ones(1, 6), 0.4 .*ones(1, 4)];
-ub = [0.9 .*ones(1, 4), 2 .*ones(1, 6), 0.45 .*ones(1, 4)];
+lb = [0.4.*ones(1, 4), -5 .*ones(1, 6), 0.4 .*ones(1, 4)];
+ub = [1.2 .*ones(1, 4), 5 .*ones(1, 6), 0.41 .*ones(1, 4)];
 
 %调用 ga 函数进行优化
 [X_0, ~] = ga(@obj_antenna, numel(X_0), A, b,[],[],lb,ub,[],options);
 
-options = optimoptions("fmincon", 'UseParallel',true);
-[X_0, result] = fmincon(@obj_antenna, X_0, A, b, [],[],lb, ub, [], options);
+%options = optimoptions("fmincon", 'UseParallel',true);
+%[X_0, result] = fmincon(@obj_antenna, X_0, A, b, [],[],lb, ub, [], options);
 
 %X = X_0;
 %0.5798    0.8503    0.7184    0.8082    0.3294    0.0758    0.6214
@@ -253,7 +253,6 @@ for i=1:size(IEN, 1)
     np = [x_5(i); y_5(i); z_5(i)];
     L1(i) = norm(np-np1);
     L2(i) = norm(np-np2);
-
 end
 
 
@@ -264,6 +263,14 @@ r = sqrt(x.^2 + y.^2 + z.^2);
 Rm = max(r);
 
 %%
+pos = [x,y,z];
+pos = [pos;[0 0 0]]; % 单位：m
+num = (1:1:(size(pos,1)))'; %符号记载
+points = [6, 12, 24, 36, 36];
+IEN = IEN_all(num, points); %可以在迭代开始的时候只生成一次，循环使用
+precious_z = @(pos_xy) (pos_xy(:,1).^2+pos_xy(:,2).^2)./(4*2.17); %计算准确的抛物面句柄
+rms = loss_cal(IEN, pos, precious_z);
+%%
 zReal = paraboloid(x, y);
 res = zReal - z;
 norm(res)%/sqrt(size(z,1))
@@ -271,7 +278,7 @@ f=figure;
 stem(1:length(z), res, 'LineWidth', 1.5);
 saveas(f, 'data/res', 'fig');
 
-save data/pos.mat x y z l1 l2 res
+save data/pos.mat x y z l1 l2 res rms
 
 %%
 %-----------------------------------------------------------%
