@@ -28,7 +28,7 @@ options = optimoptions('ga', ...
     'Display', 'iter');
 
 lb = [0.2.*ones(1, 4), -5 .*ones(1, 6), 0.2 .*ones(1, 4), 0.2 .*ones(1, 2), -5 .*ones(1, 2)];
-ub = [1.2 .*ones(1, 4), 5 .*ones(1, 6), 1.2 .*ones(1, 4), 0.2 .*ones(1, 2), -5 .*ones(1, 2)];
+ub = [0.8 .*ones(1, 4), 5 .*ones(1, 6), 0.8 .*ones(1, 4), 0.8 .*ones(1, 2), 5 .*ones(1, 2)];
 
 %调用 ga 函数进行优化
 [X_0, ~] = ga(@obj_antenna, numel(X_0), A, b,[],[],lb,ub,[],options);
@@ -36,16 +36,16 @@ ub = [1.2 .*ones(1, 4), 5 .*ones(1, 6), 1.2 .*ones(1, 4), 0.2 .*ones(1, 2), -5 .
 %options = optimoptions("fmincon", 'UseParallel',true);
 %[X_0, result] = fmincon(@obj_antenna, X_0, A, b, [],[],lb, ub, [], options);
 
-%X = X_0;
+X = X_0;
 %0.5798    0.8503    0.7184    0.8082    0.3294    0.0758    0.6214
 %0.0810    0.2917    0.0652  
 %0.1003
 %result
 
 %%
-l2 = X(1); l3 = X(2); l4 = X(3); l25 = X(4); l26 = X(16);
-l11 = X(11); l12 = X(12); l13 = X(13); l14 = X(14); l16 = X(15);
-tol1_12 = 0.01+0.1*X_0(5);
+l2 = X(1); l3 = X(2); l4 = X(3); l25 = X(4); l26 = X(15);
+l11 = X(11); l12 = X(12); l13 = X(13); l14 = X(14); l16 = X(16);
+tol1_12 = 0.01+0.1*X_0(5); 
 tol2_12 = -0.02+0.1*X_0(6);
 tol1_23 = 0.01+0.1*X_0(7);
 tol2_23 = -0.02+0.1*X_0(8);
@@ -330,7 +330,7 @@ Rm = max(r);
 pos = [x,y,z];
 pos = [pos;[0 0 0]]; % 单位：m
 num = (1:1:(size(pos,1)))'; %符号记载
-points = [6, 12, 24, 36, 36];
+points = [6, 12, 24, 36, 36, 54];
 IEN = IEN_all(num, points); %可以在迭代开始的时候只生成一次，循环使用
 precious_z = @(pos_xy) (pos_xy(:,1).^2+pos_xy(:,2).^2)./(4*2.17); %计算准确的抛物面句柄
 rms = loss_cal(IEN, pos, precious_z);
