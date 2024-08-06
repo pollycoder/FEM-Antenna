@@ -273,7 +273,6 @@ rms = loss_cal(IEN, pos, precious_z);
 %%
 zReal = paraboloid(x, y);
 res = zReal - z;
-norm(res)%/sqrt(size(z,1))
 f=figure;
 stem(1:length(z), res, 'LineWidth', 1.5);
 saveas(f, 'data/res', 'fig');
