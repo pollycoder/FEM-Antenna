@@ -4,14 +4,14 @@
 %-----------------------------------------------------------%
 clc;clear, close all
 
-X_0 = [0.9    0.9    0.9   0.9 0 0 0 0 0 0 0.9 0.9 0.9 0.9];
+X_0 = [0.9    0.9    0.9   0.9 0 0 0 0 0 0 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9];
 
-A = [-eye(4),zeros(4,6), zeros(4);
-    eye(4),zeros(4,6), zeros(4);
-    zeros(6,4), -eye(6), zeros(6, 4);
-    zeros(6,4), eye(6), zeros(6, 4);
-    zeros(4),zeros(4,6), -eye(4);
-    zeros(4),zeros(4,6), eye(4)];
+A = [-eye(4),zeros(4,6), zeros(4), zeros(4);
+    eye(4),zeros(4,6), zeros(4), zeros(4);
+    zeros(6,4), -eye(6), zeros(6, 4), zeros(6, 4);
+    zeros(6,4), eye(6), zeros(6, 4), zeros(6, 4);
+    zeros(4),zeros(4,6), -eye(4), zeros(4);
+    zeros(4),zeros(4,6), eye(4), zeros(4)];
 b = [-0.5 .* ones(4, 1);
     1.2 .* ones(4, 1);
     1.*ones(6,1);
@@ -27,8 +27,8 @@ options = optimoptions('ga', ...
     'ConstraintTolerance', 1e-5, ...
     'Display', 'iter');
 
-lb = [0.4.*ones(1, 4), -5 .*ones(1, 6), 0.4 .*ones(1, 4)];
-ub = [1.2 .*ones(1, 4), 5 .*ones(1, 6), 0.41 .*ones(1, 4)];
+lb = [0.2.*ones(1, 4), -5 .*ones(1, 6), 0.2 .*ones(1, 4), 0.2 .*ones(1, 2), -5 .*ones(1, 2)];
+ub = [1.2 .*ones(1, 4), 5 .*ones(1, 6), 1.2 .*ones(1, 4), 0.2 .*ones(1, 2), -5 .*ones(1, 2)];
 
 %调用 ga 函数进行优化
 [X_0, ~] = ga(@obj_antenna, numel(X_0), A, b,[],[],lb,ub,[],options);
