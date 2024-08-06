@@ -16,8 +16,8 @@ b = [-0.5 .* ones(4, 1);
     1.2 .* ones(4, 1);
     1.*ones(6,1);
     2.*ones(6,1);
-    -0.4 .* ones(4, 1);
-    0.6 .* ones(4, 1)];
+    -0.5 .* ones(4, 1);
+    1.2 .* ones(4, 1)];
 
 options = optimoptions('ga', ...
     'UseParallel', true, ...
@@ -27,7 +27,7 @@ options = optimoptions('ga', ...
     'ConstraintTolerance', 1e-5, ...
     'Display', 'iter');
 
-lb = [0.2.*ones(1, 4), -5 .*ones(1, 6), 0.2 .*ones(1, 4), 0.2];
+lb = [0.2*ones(1, 4), -5 .*ones(1, 6), 0.2 .*ones(1, 4), 0.2];
 ub = [0.8 .*ones(1, 4), 5 .*ones(1, 6), 0.8 .*ones(1, 4), 0.8];
 
 %调用 ga 函数进行优化
@@ -334,6 +334,7 @@ scatter3(x_2, y_2, z_2, 'LineWidth', 2, 'MarkerEdgeColor', 'b'); hold on
 scatter3(x_3, y_3, z_3, 'LineWidth', 2, 'MarkerEdgeColor', 'g'); hold on
 scatter3(x_4, y_4, z_4, 'LineWidth', 2, 'MarkerEdgeColor', 'm'); hold on
 scatter3(x_5, y_5, z_5, 'LineWidth', 2, 'MarkerEdgeColor', 'r'); hold on
+scatter3(x_6, y_6, z_6, 'LineWidth', 2, 'MarkerEdgeColor', 'k'); hold on
 colorbar
 axis equal
 saveas(f, 'data/antenna', 'fig')
