@@ -4,15 +4,13 @@
 %-----------------------------------------------------------%
 function rms = obj_antenna(X)
 l2 = X(1); l3 = X(2); l4 = X(3); l25 = X(4); l26 = X(15);
-l11 = X(11); l12 = X(12); l13 = X(13); l14 = X(14); l16 = X(16);
+l11 = X(11); l12 = X(12); l13 = X(13); l14 = X(14); 
 tol1_12 = 0.01+0.1*X(5);
 tol2_12 = -0.02+0.1*X(6);
 tol1_23 = 0.01+0.1*X(7);
 tol2_23 = -0.02+0.1*X(8);
 tol1_34 = 0.01+0.1*X(9);
 tol2_34 = -0.02+0.1*X(10);
-tol1_56 = 0.01+0.1*X(17);
-tol2_56 = -0.02+0.1*X(18);
 
 %-------------- 1st layer: Hexagon (fixed) - 6 -------------%
 l1 = l11;
@@ -220,62 +218,34 @@ y = vertcat(y, y_5);
 z = vertcat(z, z_5);
 
 
-%------------------- 6th layer:  - 54 -----------------%
-l1 = l16; l2 = l26;
+%------------------- 6th layer:  - 36 -----------------%
+l2 = l26;
 x_6 = zeros(54, 1);
 y_6 = zeros(54, 1);
 z_6 = zeros(54, 1);
-index5 = 1:2:36;
-index6 = 1:3:54;
+IEN = zeros(36, 2);
+for i=1:36
+    IEN(i, :) = [i, mod(i, 36)+1];
+end
 
-[theta_5, r_5, z_5] = cart2pol(x_5, y_5, z_5);
-for i=1:18
-    theta = theta_5(index5(i));
-    R = r_5(index5(i));
-    Z = z_5(index5(i))-tol1_56;
-    f = @(phi)(Z + l2*sin(phi) - parabola(R+l2*cos(phi))-tol2_56);
+for i=1:size(IEN, 1)
+    np1 = [x_5(IEN(i, 1)); y_5(IEN(i, 1)); z_5(IEN(i, 1))];
+    np2 = [x_5(IEN(i, 2)); y_5(IEN(i, 2)); z_5(IEN(i, 2))];
+    npm = 1/2.*(np1+np2);
+    [theta, R, Z] = cart2pol(npm(1), npm(2), npm(3));
+
+    f = @(phi)(Z + l2*sin(phi) - parabola(R+l2*cos(phi)));
     options = optimoptions('fsolve', 'Display', 'off', ...
                            'Algorithm', 'levenberg-marquardt');
     phi = fsolve(f, pi/3, options);
     R_6 = R + l2*cos(phi);
     Z_6 = Z + l2*sin(phi);
 
-    z_6(index6(i)) = Z_6;
-    x_6(index6(i)) = R_6 .* cos(theta);
-    y_6(index6(i)) = R_6 .* sin(theta);
+    z_6(i) = Z_6;
+    x_6(i) = R_6 .* cos(theta);
+    y_6(i) = R_6 .* sin(theta);
+
 end
-
-% Rest
-IEN = zeros(18, 4);
-for i=1:size(IEN, 1)
-    IEN(i, :) = [2*i-1, 2*i, 2*i, mod(2*i+1, 24)];
-    np1 = [x_5(IEN(i, 1)); y_5(IEN(i, 1)); z_5(IEN(i, 1))];
-    np2 = [x_5(IEN(i, 2)); y_5(IEN(i, 2)); z_5(IEN(i, 2))];
-    np3 = [x_5(IEN(i, 3)); y_5(IEN(i, 3)); z_5(IEN(i, 3))];
-    np4 = [x_5(IEN(i, 4)); y_5(IEN(i, 4)); z_5(IEN(i, 4))];
-    np5 = [x_6(3*i-2); y_6(3*i-2); z_6(3*i-2)];
-    np6 = [x_6(mod(3*i+1,36)); y_6(mod(3*i+1,36)); z_6(mod(3*i+1,36))];
-    
-    f = @(X)[norm(X(1:3)-np1) - l2;
-             norm(X(1:3)-np2) - l2;
-             norm(X(4:6)-np3) - l2;
-             norm(X(4:6)-np4) - l2;
-             norm(X(1:3)-np5) - l1;
-             norm(X(1:3)-X(4:6)) - l1;
-             norm(X(4:6)-np6) - l1];
-    X0 = ones(6, 1);
-    options = optimoptions('fsolve', 'Display', 'off', ...
-                           'Algorithm', 'levenberg-marquardt');
-    X = fsolve(f, X0, options);
-
-    x_6(3*i-1) = X(1);
-    y_6(3*i-1) = X(2);
-    z_6(3*i-1) = X(3);
-    x_6(3*i) = X(4);
-    y_6(3*i) = X(5);
-    z_6(3*i) = X(6);    
-end
-
 
 x = vertcat(x, x_6);
 y = vertcat(y, y_6);
