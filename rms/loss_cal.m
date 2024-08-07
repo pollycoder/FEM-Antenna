@@ -32,6 +32,7 @@ function [loss0, area] = loss_part(IEN_part, pos, func)
 end
 
 function area = triangle_area(data)
+    data(:,3) = 0.*data(:,3);
     A = data(1,:);
     B = data(2,:);
     C = data(3,:);
