@@ -4,7 +4,7 @@
 %-----------------------------------------------------------%
 clc;clear, close all
 
-X_0 = [0.9    0.9    0.9   0.9 0 0 0 0 0 0 0.9 0.9 0.9 0.9 0.9];
+X_0 = [0.9 0.9 0.9 0.9 0 0 0 0 0 0 0.9 0.9 0.9 0.9 0.9];
 
 A = [-eye(4),zeros(4,6), zeros(4), zeros(4,1);
     eye(4),zeros(4,6), zeros(4), zeros(4,1);
@@ -27,8 +27,8 @@ options = optimoptions('ga', ...
     'ConstraintTolerance', 1e-5, ...
     'Display', 'iter');
 
-lb = [0.2*ones(1, 4), -5 .*ones(1, 6), 0.2 .*ones(1, 4), 0.2];
-ub = [0.8 .*ones(1, 4), 5 .*ones(1, 6), 0.8 .*ones(1, 4), 0.8];
+lb = [0.2.*ones(1, 4), -5 .*ones(1, 6), 0.2 .*ones(1, 4), 0.2];
+ub = [0.9.*ones(1, 4), 5 .*ones(1, 6), 0.9 .*ones(1, 4), 0.9];
 
 %调用 ga 函数进行优化
 [X_0, ~] = ga(@obj_antenna, numel(X_0), A, b,[],[],lb,ub,[],options);
