@@ -27,7 +27,7 @@ options = optimoptions('ga', ...
     'ConstraintTolerance', 1e-5, ...
     'Display', 'iter');
 
-lb = [0.2.*ones(1, 4), -5 .*ones(1, 6), 0.2 .*ones(1, 4), 0.2];
+lb = [0.1.*ones(1, 4), -5 .*ones(1, 6), 0.1 .*ones(1, 4), 0.1];
 ub = [0.9.*ones(1, 4), 5 .*ones(1, 6), 0.9 .*ones(1, 4), 0.9];
 
 %调用 ga 函数进行优化
