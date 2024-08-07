@@ -28,8 +28,6 @@ b= [-0.45.*ones(10,1);
     8.*ones(7,1);
     8.*ones(7,1)];
 
-X_0 = [0.7*ones(1,10), zeros(1,7)];
-
 options = optimoptions('ga', ...
     'UseParallel', true, ...
     'MaxGenerations', 2000, ...
@@ -42,23 +40,23 @@ lb = [0.2*ones(1, 4), -5 .*ones(1, 6), 0.2 .*ones(1, 4), 0.2];
 ub = [0.9.*ones(1, 4), 5 .*ones(1, 6), 0.9 .*ones(1, 4), 0.9];
 
 %调用 ga 函数进行优化
-[X_0, ~] = ga(@angle_obj_antenna, numel(X_0), A, b,[],[],lb,ub,[],options);
-
-X = X_0;
+[X, ~] = ga(@angle_obj_antenna_48, 18, A, b,[],[],lb,ub,[],options);
 
 %%
 l22 = X(1); l23 = X(2); l24 = X(3); l25 = X(4); l26 = X(5);
 l11 = X(6); l12 = X(7); l13 = X(8); l14 = X(9); l16=X(10);
-tol1_12 = 0.034*X(11);
 
-tol1_23 = 0.034*X(12);
-tol2_23 = 0.034*X(13);
+tol1_12 = 0.01+0.1*X(11);
+tol2_12 = -0.02+0.1*X(12);
 
-tol1_34 = 0.034*X(14);
-tol2_34 = 0.034*X(15);
+tol1_23 = 0.01+0.1*X(13);
+tol2_23 = -0.02+0.1*X(14);
 
-tol1_56 = 0.034*X(16);
-tol2_56 = 0.034*X(17);
+tol1_34 = 0.01+0.1*X(15);
+tol2_34 = -0.02+0.1*X(16);
+
+tol1_56 = 0.034*X(17);
+tol2_56 = 0.034*X(18);
 
 
 %-------------- 1st layer: Hexagon (fixed) - 6 -------------%
@@ -79,11 +77,10 @@ y_2 = zeros(12, 1);
 z_2 = zeros(12, 1);
 
 % 1, 3, 5, 7, 9, 11 - On the paraboloid
-Z_1 = parabola(R_1);
-f = @(phi)(Z_1 + l22*sin(phi) - parabola(R_1+l22*cos(phi)));
+Z_1 = parabola(R_1)-tol1_12;
+f = @(phi)(Z_1 + l22*sin(phi) - parabola(R_1+l22*cos(phi))-tol2_12);
 options = optimoptions('fsolve', 'Display', 'off');
 phi = fsolve(f, pi/3, options);
-phi = phi + tol1_12;
 R_2 = R_1 + l22*cos(phi);
 Z_2 = Z_1 + l22*sin(phi);
 
@@ -121,7 +118,7 @@ end
 
 %---------- 3rd layer: Icositetragon (fixed) - 24 ----------%
 l1 = l13;
-l22 = l23;
+l2 = l23;
 x_3 = zeros(24, 1);
 y_3 = zeros(24, 1);
 z_3 = zeros(24, 1);
@@ -131,18 +128,13 @@ index3 = 1:2:24;
 for i=1:12
     theta = theta_2(i);
     R = r_2(i);
-    Z = z_2(i);
-    f = @(phi)(Z + l22*sin(phi) - parabola(R+l22*cos(phi)));
+    Z = z_2(i)-tol1_23;
+    f = @(phi)(Z + l2*sin(phi) - parabola(R+l2*cos(phi))-tol2_23);
     options = optimoptions('fsolve', 'Display', 'off', ...
                            'Algorithm', 'levenberg-marquardt');
     phi = fsolve(f, pi/3, options);
-    if mod(i,2) == 0
-        phi = phi + tol1_23;
-    else
-        phi = phi + tol2_23;
-    end
-    R_3 = R + l22*cos(phi);
-    Z_3 = Z + l22*sin(phi);
+    R_3 = R + l2*cos(phi);
+    Z_3 = Z + l2*sin(phi);
 
     z_3(index3(i)) = Z_3;
     x_3(index3(i)) = R_3 .* cos(theta);
@@ -194,19 +186,13 @@ index3 = 1:2:24;
 for i=1:12
     theta = theta_3(index3(i));
     R = r_3(index3(i));
-    Z = z_3(index3(i));
-    f = @(phi)(Z + l22*sin(phi) - parabola(R+l22*cos(phi)));
+    Z = z_3(index3(i))-tol1_34;
+    f = @(phi)(Z + l2*sin(phi) - parabola(R+l2*cos(phi))-tol2_34);
     options = optimoptions('fsolve', 'Display', 'off', ...
                            'Algorithm', 'levenberg-marquardt');
     phi = fsolve(f, pi/3, options);
-    if mod(i,2) == 1
-        phi = phi + tol1_34;
-    else
-        phi = phi + tol2_34;
-    end
-
-    R_4 = R + l22*cos(phi);
-    Z_4 = Z + l22*sin(phi);
+    R_4 = R + l2*cos(phi);
+    Z_4 = Z + l2*sin(phi);
 
     z_4(index4(i)) = Z_4;
     x_4(index4(i)) = R_4 .* cos(theta);
@@ -298,18 +284,18 @@ if ~isreal([x,y,z])
 end
 
 
-%------------------- 6th layer:  - 54 -----------------%
+%------------------- 6th layer:  - 48 -----------------%
 l1 = l16;
 l22 = l26;
-x_6 = zeros(54, 1);
-y_6 = zeros(54, 1);
-z_6 = zeros(54, 1);
+x_6 = zeros(48, 1);
+y_6 = zeros(48, 1);
+z_6 = zeros(48, 1);
 
 % 1, 4, 7, ....52
-index6 = 1:3:54;
-index5 = 1:2:36;
+index6 = 1:4:48;
+index5 = 1:3:36;
 [theta_5, r_5, z_5] = cart2pol(x_5, y_5, z_5);
-for i=1:18
+for i=1:12
     theta = theta_5(index5(i));
     R = r_5(index5(i));
     Z = z_5(index5(i));
@@ -317,7 +303,7 @@ for i=1:18
     options = optimoptions('fsolve', 'Display', 'off', ...
                            'Algorithm', 'levenberg-marquardt');
     phi = fsolve(f, pi/3, options);
-    if mod(i,3) == 1
+    if mod(i,2) == 1
         phi = phi + tol1_56;
     else
         phi = phi + tol2_56;
@@ -332,34 +318,41 @@ for i=1:18
 end
 
 % Rest
-IEN = zeros(18, 4);
+IEN = zeros(12, 6);
 for i=1:size(IEN, 1)
-    IEN(i, :) = [2*i-1, 2*i, 2*i, mod(2*i+1, 36)];
-    np1 = [x_5(IEN(i, 1)); y_5(IEN(i, 1)); z_5(IEN(i, 1))];
-    np2 = [x_5(IEN(i, 2)); y_5(IEN(i, 2)); z_5(IEN(i, 2))];
-    np3 = [x_5(IEN(i, 3)); y_5(IEN(i, 3)); z_5(IEN(i, 3))];
-    np4 = [x_5(IEN(i, 4)); y_5(IEN(i, 4)); z_5(IEN(i, 4))];
-    np5 = [x_6(3*i-2); y_6(3*i-2); z_6(3*i-2)];
-    np6 = [x_6(mod(3*i+1,54)); y_6(mod(3*i+1,54)); z_6(mod(3*i+1,54))];
+    IEN(i, :) = [3*i-2, 3*i-1, 3*i-1, 3*i, 3*i, mod(3*i+1, 36)];
+    np = cell(1,size(IEN,2)+2);
+    for j=1:size(IEN,2)
+        np{j} = [x_5(IEN(i, j)); y_5(IEN(i, j)); z_5(IEN(i, j))];
+    end
+    np{end-1} = [x_6(4*i-3); y_6(4*i-3); z_6(4*i-3)];
+    np{end} = [x_6(mod(4*i+1,48)); y_6(mod(4*i+1,48)); z_6(mod(4*i+1,48))];
+
     
-    f = @(X)[norm(X(1:3)-np1) - l22;
-             norm(X(1:3)-np2) - l22;
-             norm(X(4:6)-np3) - l22;
-             norm(X(4:6)-np4) - l22;
-             norm(X(1:3)-np5) - l1;
+    f = @(X)[norm(X(1:3)-np{1}) - l22;
+             norm(X(1:3)-np{2}) - l22;
+             norm(X(4:6)-np{3}) - l22;
+             norm(X(4:6)-np{4}) - l22;
+             norm(X(7:9)-np{5}) - l22;
+             norm(X(7:9)-np{6}) - l22;
+             norm(X(1:3)-np{7}) - l1;
+             norm(X(7:9)-np{8}) - l1;
              norm(X(1:3)-X(4:6)) - l1;
-             norm(X(4:6)-np6) - l1];
-    X0 = ones(6, 1);
+             norm(X(7:9)-X(4:6)) - l1];
+    X0 = ones(9, 1);
     options = optimoptions('fsolve', 'Display', 'off', ...
                            'Algorithm', 'levenberg-marquardt');
     X = fsolve(f, X0, options);
 
-    x_6(3*i-1) = X(1);
-    y_6(3*i-1) = X(2);
-    z_6(3*i-1) = X(3);
-    x_6(3*i) = X(4);
-    y_6(3*i) = X(5);
-    z_6(3*i) = X(6);    
+    x_6(4*i-2) = X(1);
+    y_6(4*i-2) = X(2);
+    z_6(4*i-2) = X(3);
+    x_6(4*i-1) = X(4);
+    y_6(4*i-1) = X(5);
+    z_6(4*i-1) = X(6);    
+    x_6(4*i) = X(7);
+    y_6(4*i) = X(8);
+    z_6(4*i) = X(9); 
 end
 
 x = vertcat(x, x_6);
