@@ -4,29 +4,14 @@
 %-----------------------------------------------------------%
 clc;clear, close all
 
-X_0 = [0.6    0.6    0.6   0.6 0 0 0 0 0 0 0.9 0.9 0.9 0.9 0.9];
-
-A = [-eye(4),zeros(4,6), zeros(4), zeros(4,1);
-    eye(4),zeros(4,6), zeros(4), zeros(4,1);
-    zeros(6,4), -eye(6), zeros(6, 4), zeros(6, 1);
-    zeros(6,4), eye(6), zeros(6, 4), zeros(6, 1);
-    zeros(4),zeros(4,6), -eye(4), zeros(4,1);
-    zeros(4),zeros(4,6), eye(4), zeros(4,1)];
-b = [-0.5 .* ones(4, 1);
-    1.0 .* ones(4, 1);
-    20*ones(6,1);
-    20.*ones(6,1);
-    -0.5 .* ones(4, 1);
-    1.0 .* ones(4, 1)];
-
-A = [-eye(10), zeros(10,7);
-    eye(10), zeros(10,7);
-    zeros(7,10),-eye(7);
-    zeros(7,10),eye(7)];
+A = [-eye(10), zeros(10,8);
+    eye(10), zeros(10,8);
+    zeros(8,10),-eye(8);
+    zeros(8,10),eye(8)];
 b= [-0.45.*ones(10,1);
     1.1.*ones(10,1);
-    8.*ones(7,1);
-    8.*ones(7,1)];
+    8.*ones(8,1);
+    8.*ones(8,1)];
 
 options = optimoptions('ga', ...
     'UseParallel', true, ...
@@ -36,27 +21,27 @@ options = optimoptions('ga', ...
     'ConstraintTolerance', 1e-5, ...
     'Display', 'iter');
 
-lb = [0.2*ones(1, 4), -5 .*ones(1, 6), 0.2 .*ones(1, 4), 0.2];
-ub = [0.9.*ones(1, 4), 5 .*ones(1, 6), 0.9 .*ones(1, 4), 0.9];
+lb = [0.2*ones(1, 4), -5 .*ones(1, 6), 0.2 .*ones(1, 4), 0.2.*ones(1, 4)];
+ub = [1.2.*ones(1, 4), 5 .*ones(1, 6), 1.2 .*ones(1, 4), 1.2.*ones(1, 4)];
 
 %调用 ga 函数进行优化
 [X, ~] = ga(@angle_obj_antenna_48, 18, A, b,[],[],lb,ub,[],options);
 
 %%
 l22 = X(1); l23 = X(2); l24 = X(3); l25 = X(4); l26 = X(5);
-l11 = X(6); l12 = X(7); l13 = X(8); l14 = X(9); l16=X(10);
+l11 = X(6); l12 = X(7); l13 = X(8); l14 = X(9); l16 = X(10);
 
-tol1_12 = 0.01+0.1*X(11);
-tol2_12 = -0.02+0.1*X(12);
+tol1_12 = X(11)/100;
+tol2_12 = X(12)/100;
 
-tol1_23 = 0.01+0.1*X(13);
-tol2_23 = -0.02+0.1*X(14);
+tol1_23 = X(13)/100;
+tol2_23 = X(14)/100;
 
-tol1_34 = 0.01+0.1*X(15);
-tol2_34 = -0.02+0.1*X(16);
+tol1_34 = X(15)/100;
+tol2_34 = X(16)/100;
 
-tol1_56 = 0.034*X(17);
-tol2_56 = 0.034*X(18);
+tol1_56 = X(17)/100;
+tol2_56 = X(18)/100;
 
 
 %-------------- 1st layer: Hexagon (fixed) - 6 -------------%
@@ -359,8 +344,6 @@ x = vertcat(x, x_6);
 y = vertcat(y, y_6);
 z = vertcat(z, z_6);
 
-
-
 r = sqrt(x.^2 + y.^2 + z.^2);
 Rm = max(r);
 
@@ -368,7 +351,7 @@ Rm = max(r);
 pos = [x,y,z];
 pos = [pos;[0 0 0]]; % 单位：m
 num = (1:1:(size(pos,1)))'; %符号记载
-points = [6, 12, 24, 36, 36, 54];
+points = [6, 12, 24, 36, 36, 48];
 IEN = IEN_all(num, points); %可以在迭代开始的时候只生成一次，循环使用
 precious_z = @(pos_xy) (pos_xy(:,1).^2+pos_xy(:,2).^2)./(4*2.17); %计算准确的抛物面句柄
 rms = loss_cal(IEN, pos, precious_z);

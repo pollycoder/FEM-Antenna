@@ -4,19 +4,19 @@
 %-----------------------------------------------------------%
 function rms = angle_obj_antenna_48(X)
 l22 = X(1); l23 = X(2); l24 = X(3); l25 = X(4); l26 = X(5);
-l11 = X(6); l12 = X(7); l13 = X(8); l14 = X(9); l16=X(10);
+l11 = X(6); l12 = X(7); l13 = X(8); l14 = X(9); l16 = X(10);
 
-tol1_12 = 0.01+0.1*X(11);
-tol2_12 = -0.02+0.1*X(12);
+tol1_12 = X(11)/100;
+tol2_12 = X(12)/100;
 
-tol1_23 = 0.01+0.1*X(13);
-tol2_23 = -0.02+0.1*X(14);
+tol1_23 = X(13)/100;
+tol2_23 = X(14)/100;
 
-tol1_34 = 0.01+0.1*X(15);
-tol2_34 = -0.02+0.1*X(16);
+tol1_34 = X(15)/100;
+tol2_34 = X(16)/100;
 
-tol1_56 = 0.034*X(17);
-tol2_56 = 0.034*X(18);
+tol1_56 = X(17)/100;
+tol2_56 = X(18)/100;
 
 
 %-------------- 1st layer: Hexagon (fixed) - 6 -------------%
@@ -299,7 +299,7 @@ for i=1:size(IEN, 1)
              norm(X(7:9)-np{8}) - l1;
              norm(X(1:3)-X(4:6)) - l1;
              norm(X(7:9)-X(4:6)) - l1];
-    X0 = ones(9, 1);
+    X0 = 2.*ones(9, 1);
     options = optimoptions('fsolve', 'Display', 'off', ...
                            'Algorithm', 'levenberg-marquardt');
     X = fsolve(f, X0, options);
@@ -320,12 +320,16 @@ y = vertcat(y, y_6);
 z = vertcat(z, z_6);
 
 
-
-
 if ~isreal([x,y,z])
-    rms=50;
-    return;
+    rms=10;
+    return
 end
+
+if min(z_6) - max(z_5) < 0
+    rms=10;
+    return
+end
+
 
 pos = [x,y,z];
 pos = [pos;[0 0 0]]; % 单位：m
