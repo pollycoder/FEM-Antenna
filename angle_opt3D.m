@@ -21,8 +21,8 @@ options = optimoptions('ga', ...
     'ConstraintTolerance', 1e-5, ...
     'Display', 'iter');
 
-lb = [0.2*ones(1, 4), -5 .*ones(1, 6), 0.2 .*ones(1, 4), 0.2.*ones(1, 4)];
-ub = [1.2.*ones(1, 4), 5 .*ones(1, 6), 1.2 .*ones(1, 4), 1.2.*ones(1, 4)];
+lb = [0.2.*ones(1, 10), -5.*ones(1,8)];
+ub = [1.2.*ones(1, 10), 5.*ones(1,8)];
 
 %调用 ga 函数进行优化
 [X, ~] = ga(@angle_obj_antenna_48, 18, A, b,[],[],lb,ub,[],options);
@@ -271,7 +271,7 @@ end
 
 %------------------- 6th layer:  - 48 -----------------%
 l1 = l16;
-l22 = l26;
+l2 = l26;
 x_6 = zeros(48, 1);
 y_6 = zeros(48, 1);
 z_6 = zeros(48, 1);
@@ -284,7 +284,7 @@ for i=1:12
     theta = theta_5(index5(i));
     R = r_5(index5(i));
     Z = z_5(index5(i));
-    f = @(phi)(Z + l22*sin(phi) - parabola(R+l22*cos(phi)));
+    f = @(phi)(Z + l2*sin(phi) - parabola(R+l2*cos(phi)));
     options = optimoptions('fsolve', 'Display', 'off', ...
                            'Algorithm', 'levenberg-marquardt');
     phi = fsolve(f, pi/3, options);
@@ -294,8 +294,8 @@ for i=1:12
         phi = phi + tol2_56;
     end
 
-    R_6 = R + l22*cos(phi);
-    Z_6 = Z + l22*sin(phi);
+    R_6 = R + l2*cos(phi);
+    Z_6 = Z + l2*sin(phi);
 
     z_6(index6(i)) = Z_6;
     x_6(index6(i)) = R_6 .* cos(theta);
@@ -314,17 +314,17 @@ for i=1:size(IEN, 1)
     np{end} = [x_6(mod(4*i+1,48)); y_6(mod(4*i+1,48)); z_6(mod(4*i+1,48))];
 
     
-    f = @(X)[norm(X(1:3)-np{1}) - l22;
-             norm(X(1:3)-np{2}) - l22;
-             norm(X(4:6)-np{3}) - l22;
-             norm(X(4:6)-np{4}) - l22;
-             norm(X(7:9)-np{5}) - l22;
-             norm(X(7:9)-np{6}) - l22;
+    f = @(X)[norm(X(1:3)-np{1}) - l2;
+             norm(X(1:3)-np{2}) - l2;
+             norm(X(4:6)-np{3}) - l2;
+             norm(X(4:6)-np{4}) - l2;
+             norm(X(7:9)-np{5}) - l2;
+             norm(X(7:9)-np{6}) - l2;
              norm(X(1:3)-np{7}) - l1;
              norm(X(7:9)-np{8}) - l1;
              norm(X(1:3)-X(4:6)) - l1;
              norm(X(7:9)-X(4:6)) - l1];
-    X0 = ones(9, 1);
+    X0 = 5 .*ones(9, 1);
     options = optimoptions('fsolve', 'Display', 'off', ...
                            'Algorithm', 'levenberg-marquardt');
     X = fsolve(f, X0, options);
