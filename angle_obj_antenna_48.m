@@ -246,7 +246,7 @@ end
 
 %------------------- 6th layer:  - 48 -----------------%
 l1 = l16;
-l2 = l26;
+l22 = l26;
 x_6 = zeros(48, 1);
 y_6 = zeros(48, 1);
 z_6 = zeros(48, 1);
@@ -258,19 +258,15 @@ index5 = 1:3:36;
 for i=1:12
     theta = theta_5(index5(i));
     R = r_5(index5(i));
-    Z = z_5(index5(i));
-    f = @(phi)(Z + l2*sin(phi) - parabola(R+l2*cos(phi)));
+
+    Z = z_5(index3(i))-tol1_56;
+    f = @(phi)(Z + l2*sin(phi) - parabola(R+l2*cos(phi))-tol2_56);
     options = optimoptions('fsolve', 'Display', 'off', ...
                            'Algorithm', 'levenberg-marquardt');
     phi = fsolve(f, pi/3, options);
-    if mod(i,2) == 1
-        phi = phi + tol1_56;
-    else
-        phi = phi + tol2_56;
-    end
 
-    R_6 = R + l2*cos(phi);
-    Z_6 = Z + l2*sin(phi);
+    R_6 = R + l22*cos(phi);
+    Z_6 = Z + l22*sin(phi);
 
     z_6(index6(i)) = Z_6;
     x_6(index6(i)) = R_6 .* cos(theta);
@@ -289,17 +285,17 @@ for i=1:size(IEN, 1)
     np{end} = [x_6(mod(4*i+1,48)); y_6(mod(4*i+1,48)); z_6(mod(4*i+1,48))];
 
     
-    f = @(X)[norm(X(1:3)-np{1}) - l2;
-             norm(X(1:3)-np{2}) - l2;
-             norm(X(4:6)-np{3}) - l2;
-             norm(X(4:6)-np{4}) - l2;
-             norm(X(7:9)-np{5}) - l2;
-             norm(X(7:9)-np{6}) - l2;
+    f = @(X)[norm(X(1:3)-np{1}) - l22;
+             norm(X(1:3)-np{2}) - l22;
+             norm(X(4:6)-np{3}) - l22;
+             norm(X(4:6)-np{4}) - l22;
+             norm(X(7:9)-np{5}) - l22;
+             norm(X(7:9)-np{6}) - l22;
              norm(X(1:3)-np{7}) - l1;
              norm(X(7:9)-np{8}) - l1;
              norm(X(1:3)-X(4:6)) - l1;
              norm(X(7:9)-X(4:6)) - l1];
-    X0 = 5 .*ones(9, 1);
+    X0 = 5.*ones(9, 1);
     options = optimoptions('fsolve', 'Display', 'off', ...
                            'Algorithm', 'levenberg-marquardt');
     X = fsolve(f, X0, options);
@@ -326,7 +322,7 @@ if ~isreal([x,y,z])
 end
 
 if min(z_6) - max(z_5) < 0
-    rms=10;
+    rms=50;
     return
 end
 
