@@ -7,33 +7,35 @@ clc;clear, close all
 options = optimoptions('particleswarm', ...
     'UseParallel', true, ...
     'SwarmSize', 1000, ...
-    'Display', 'iter');
+    'Display', 'iter', ...
+    'MaxIterations', 1000, ...
+    'MaxStallIterations', 10);
 
-lb = [0.3*ones(1, 9), -5.*ones(1, 8) ];
-ub = [0.9.*ones(1, 9), 5.*ones(1, 8) ];
+lb = [0.3.*ones(1, 10), -10.*ones(1, 8)];
+ub = [1.2.*ones(1, 10), 10.*ones(1, 8)];
 
 %调用 pso 函数进行优化
-[X_pso, ~] = particleswarm(@angle_obj_antenna_48, 17, lb, ub, options);
-
-%X = fmincon(@angle_obj_antenna_48, X_ga, A,b);
-
+[X_pso, ~] = particleswarm(@angle_obj_antenna_48, 18, lb, ub, options);
 
 %%
-X = X_pso;
-l22 = X(1); l23 = X(2); l24 = X(3); l25 = X(4); %l26 = X(5);
-l11 = X(5); l12 = X(6); l13 = X(7); l14 = X(8); l15 = X(9);%l16 = X(10);
+options = optimset('Display', 'iter');
+X = fminsearch(@angle_obj_antenna_48, X_pso, options);
 
-tol1_12 = X(10)/100;
-tol2_12 = X(11)/100;
+%%
+l22 = X(1); l23 = X(2); l24 = X(3); l25 = X(4); l26 = X(5);
+l11 = X(6); l12 = X(7); l13 = X(8); l14 = X(9); l15 = X(10);
 
-tol1_23 = X(12)/100;
-tol2_23 = X(13)/100;
+tol1_12 = X(11)/100;
+tol2_12 = X(12)/100;
 
-tol1_34 = X(14)/100;
-tol2_34 = X(15)/100;
+tol1_23 = X(13)/100;
+tol2_23 = X(14)/100;
 
-tol1_45 = X(16)/100;
-tol2_45 = X(17)/100;
+tol1_34 = X(15)/100;
+tol2_34 = X(16)/100;
+
+tol1_45 = X(17)/100;
+tol2_45 = X(18)/100;
 
 
 %-------------- 1st layer: Hexagon (fixed) - 6 -------------%
@@ -287,6 +289,48 @@ x = vertcat(x, x_5);
 y = vertcat(y, y_5);
 z = vertcat(z, z_5);
 
+
+if ~isreal([x,y,z])
+    rms=50;
+    return;
+end
+
+
+%------------------- 6th layer:  - 48 -----------------%
+h = sqrt(l26^2-(l15/2)^2);
+l2 = h;
+x_6 = zeros(48, 1);
+y_6 = zeros(48, 1);
+z_6 = zeros(48, 1);
+
+IEN = zeros(48, 2);
+for i=1:48
+    IEN(i, :) = [i, mod(i, 48)+1];
+end
+
+for i=1:size(IEN, 1)
+    np1 = [x_5(IEN(i, 1)); y_5(IEN(i, 1)); z_5(IEN(i, 1))];
+    np2 = [x_5(IEN(i, 2)); y_5(IEN(i, 2)); z_5(IEN(i, 2))];
+    npm = 1/2.*(np1+np2);
+    [theta, R, Z] = cart2pol(npm(1), npm(2), npm(3));
+
+    f = @(phi)(Z + l2*sin(phi) - parabola(R+l2*cos(phi)));
+    options = optimoptions('fsolve', 'Display', 'off', ...
+                           'Algorithm', 'levenberg-marquardt');
+    phi = fsolve(f, pi/3, options);
+    R_6 = R + l2*cos(phi);
+    Z_6 = Z + l2*sin(phi);
+
+    z_6(i) = Z_6;
+    x_6(i) = R_6 .* cos(theta);
+    y_6(i) = R_6 .* sin(theta);
+
+end
+
+
+x = vertcat(x, x_6);
+y = vertcat(y, y_6);
+z = vertcat(z, z_6);
 r = sqrt(x.^2 + y.^2 + z.^2);
 Rm = max(r);
 
@@ -294,7 +338,7 @@ Rm = max(r);
 pos = [x,y,z];
 pos = [pos;[0 0 0]]; % 单位：m
 num = (1:1:(size(pos,1)))'; %符号记载
-points = [6, 12, 24, 36, 48];
+points = [6, 12, 24, 36, 48, 48];
 IEN = IEN_all(num, points); %可以在迭代开始的时候只生成一次，循环使用
 precious_z = @(pos_xy) (pos_xy(:,1).^2+pos_xy(:,2).^2)./(4*2.17); %计算准确的抛物面句柄
 rms = loss_cal(IEN, pos, precious_z);
@@ -326,7 +370,7 @@ scatter3(x_2, y_2, z_2, 'LineWidth', 2, 'MarkerEdgeColor', 'b'); hold on
 scatter3(x_3, y_3, z_3, 'LineWidth', 2, 'MarkerEdgeColor', 'g'); hold on
 scatter3(x_4, y_4, z_4, 'LineWidth', 2, 'MarkerEdgeColor', 'm'); hold on
 scatter3(x_5, y_5, z_5, 'LineWidth', 2, 'MarkerEdgeColor', 'r'); hold on
-%scatter3(x_6, y_6, z_6, 'LineWidth', 2, 'MarkerEdgeColor', 'k'); hold on
+scatter3(x_6, y_6, z_6, 'LineWidth', 2, 'MarkerEdgeColor', 'k'); hold on
 colorbar
 axis equal
 saveas(f, 'data/antenna', 'fig')

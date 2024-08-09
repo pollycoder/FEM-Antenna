@@ -3,20 +3,21 @@
 % 6 Layers                                                  %
 %-----------------------------------------------------------%
 function rms = angle_obj_antenna_48(X)
-l22 = X(1); l23 = X(2); l24 = X(3); l25 = X(4); %l26 = X(5);
-l11 = X(5); l12 = X(6); l13 = X(7); l14 = X(8); l15 = X(9);%l16 = X(10);
+pen = 1000; height = 0.05;
+l22 = X(1); l23 = X(2); l24 = X(3); l25 = X(4); l26 = X(5);
+l11 = X(6); l12 = X(7); l13 = X(8); l14 = X(9); l15 = X(10);
 
-tol1_12 = X(10)/100;
-tol2_12 = X(11)/100;
+tol1_12 = X(11)/100;
+tol2_12 = X(12)/100;
 
-tol1_23 = X(12)/100;
-tol2_23 = X(13)/100;
+tol1_23 = X(13)/100;
+tol2_23 = X(14)/100;
 
-tol1_34 = X(14)/100;
-tol2_34 = X(15)/100;
+tol1_34 = X(15)/100;
+tol2_34 = X(16)/100;
 
-tol1_45 = X(16)/100;
-tol2_45 = X(17)/100;
+tol1_45 = X(17)/100;
+tol2_45 = X(18)/100;
 
 
 %-------------- 1st layer: Hexagon (fixed) - 6 -------------%
@@ -71,9 +72,9 @@ x = vertcat(x, x_2);
 y = vertcat(y, y_2);
 z = vertcat(z, z_2);
 
-if ~isreal([x,y,z])
-    rms=50;
-    return;
+if ~isreal([x,y,z]) || min(z_2) <= max(z_1) + height
+    rms=pen;
+    return
 end
 
 %---------- 3rd layer: Icositetragon (fixed) - 24 ----------%
@@ -127,9 +128,9 @@ x = vertcat(x, x_3);
 y = vertcat(y, y_3);
 z = vertcat(z, z_3);
 
-if ~isreal([x,y,z])
-    rms=50;
-    return;
+if ~isreal([x,y,z]) || min(z_3) <= max(z_2) + height
+    rms=pen;
+    return
 end
 
 %------------------- 4th layer:  - 36 -----------------%
@@ -195,9 +196,9 @@ x = vertcat(x, x_4);
 y = vertcat(y, y_4);
 z = vertcat(z, z_4);
 
-if ~isreal([x,y,z])
-    rms=50;
-    return;
+if ~isreal([x,y,z]) || min(z_4) <= max(z_3) + height
+    rms=pen;
+    return
 end
 
 %------------------- 5th layer:  - 48 -----------------%
@@ -271,86 +272,57 @@ y = vertcat(y, y_5);
 z = vertcat(z, z_5);
 
 
-if ~isreal([x,y,z])
-    rms=50;
-    return;
+if ~isreal([x,y,z]) || min(z_5) <= max(z_4) + height
+    rms=pen;
+    return
 end
 
-%{
+
 %------------------- 6th layer:  - 48 -----------------%
-l1 = l16;
-l22 = l26;
+h = sqrt(l26^2-(l15/2)^2);
+l2 = h;
 x_6 = zeros(48, 1);
 y_6 = zeros(48, 1);
 z_6 = zeros(48, 1);
 
-% 1, 4, 7, ....52
-index6 = 1:4:48;
-index5 = 1:3:36;
-[theta_5, r_5, z_5] = cart2pol(x_5, y_5, z_5);
-for i=1:12
-    theta = theta_5(index5(i));
-    R = r_5(index5(i));
+IEN = zeros(48, 2);
+for i=1:48
+    IEN(i, :) = [i, mod(i, 48)+1];
+end
 
-    Z = z_5(index3(i))-tol1_56;
-    f = @(phi)(Z + l2*sin(phi) - parabola(R+l2*cos(phi))-tol2_56);
+for i=1:size(IEN, 1)
+    np1 = [x_5(IEN(i, 1)); y_5(IEN(i, 1)); z_5(IEN(i, 1))];
+    np2 = [x_5(IEN(i, 2)); y_5(IEN(i, 2)); z_5(IEN(i, 2))];
+    npm = 1/2.*(np1+np2);
+    [theta, R, Z] = cart2pol(npm(1), npm(2), npm(3));
+
+    f = @(phi)(Z + l2*sin(phi) - parabola(R+l2*cos(phi)));
     options = optimoptions('fsolve', 'Display', 'off', ...
                            'Algorithm', 'levenberg-marquardt');
     phi = fsolve(f, pi/3, options);
+    R_6 = R + l2*cos(phi);
+    Z_6 = Z + l2*sin(phi);
 
-    R_6 = R + l22*cos(phi);
-    Z_6 = Z + l22*sin(phi);
+    z_6(i) = Z_6;
+    x_6(i) = R_6 .* cos(theta);
+    y_6(i) = R_6 .* sin(theta);
 
-    z_6(index6(i)) = Z_6;
-    x_6(index6(i)) = R_6 .* cos(theta);
-    y_6(index6(i)) = R_6 .* sin(theta);
 end
 
-% Rest
-IEN = zeros(12, 6);
-for i=1:size(IEN, 1)
-    IEN(i, :) = [3*i-2, 3*i-1, 3*i-1, 3*i, 3*i, mod(3*i+1, 36)];
-    np = cell(1,size(IEN,2)+2);
-    for j=1:size(IEN,2)
-        np{j} = [x_5(IEN(i, j)); y_5(IEN(i, j)); z_5(IEN(i, j))];
-    end
-    np{end-1} = [x_6(4*i-3); y_6(4*i-3); z_6(4*i-3)];
-    np{end} = [x_6(mod(4*i+1,48)); y_6(mod(4*i+1,48)); z_6(mod(4*i+1,48))];
-
-    
-    f = @(X)[norm(X(1:3)-np{1}) - l22;
-             norm(X(1:3)-np{2}) - l22;
-             norm(X(4:6)-np{3}) - l22;
-             norm(X(4:6)-np{4}) - l22;
-             norm(X(7:9)-np{5}) - l22;
-             norm(X(7:9)-np{6}) - l22;
-             norm(X(1:3)-np{7}) - l1;
-             norm(X(7:9)-np{8}) - l1;
-             norm(X(1:3)-X(4:6)) - l1;
-             norm(X(7:9)-X(4:6)) - l1];
-    X0 = 5.*ones(9, 1);
-    options = optimoptions('fsolve', 'Display', 'off', ...
-                           'Algorithm', 'levenberg-marquardt');
-    X = fsolve(f, X0, options);
-
-    x_6(4*i-2) = X(1);
-    y_6(4*i-2) = X(2);
-    z_6(4*i-2) = X(3);
-    x_6(4*i-1) = X(4);
-    y_6(4*i-1) = X(5);
-    z_6(4*i-1) = X(6);    
-    x_6(4*i) = X(7);
-    y_6(4*i) = X(8);
-    z_6(4*i) = X(9); 
-end
 
 x = vertcat(x, x_6);
 y = vertcat(y, y_6);
 z = vertcat(z, z_6);
-%}
 
-if ~isreal([x,y,z]) || min(z_5) <= max(z_4) + 0.1
-    rms=100;
+if ~isreal([x,y,z]) || min(z_6) <= max(z_5) + height
+    rms=pen;
+    return
+end
+
+r = sqrt(x.^2 + y.^2 + z.^2);
+Rm = max(r);
+if Rm < 2.7
+    rms = pen;
     return
 end
 
@@ -358,7 +330,7 @@ end
 pos = [x,y,z];
 pos = [pos;[0 0 0]]; % 单位：m
 num = (1:1:(size(pos,1)))'; %符号记载
-points = [6, 12, 24, 36, 48];
+points = [6, 12, 24, 36, 48, 48];
 IEN = IEN_all(num, points); %可以在迭代开始的时候只生成一次，循环使用
 precious_z = @(pos_xy) (pos_xy(:,1).^2+pos_xy(:,2).^2)./(4*2.17); %计算准确的抛物面句柄
 rms = 100*loss_cal(IEN, pos, precious_z);
